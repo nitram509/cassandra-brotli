@@ -1,19 +1,17 @@
 package org.apache.cassandra.io.compress;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import com.google.common.collect.Sets;
+import org.meteogroup.jbrotli.Brotli;
+import org.meteogroup.jbrotli.BrotliDeCompressor;
+import org.meteogroup.jbrotli.libloader.BrotliLibraryLoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
-import org.scijava.nativelib.NativeLoader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.collect.Sets;
-import com.meteogroup.jbrotli.Brotli;
-import com.meteogroup.jbrotli.Brotli.Mode;
-import com.meteogroup.jbrotli.BrotliDeCompressor;
+import static com.google.common.base.Preconditions.checkArgument;
 
 
 public class BrotliCompressor implements ICompressor {
@@ -31,9 +29,9 @@ public class BrotliCompressor implements ICompressor {
         }
 
         try {
-            NativeLoader.loadLibrary("brotli");
+            BrotliLibraryLoader.loadBrotli();
         }
-        catch (IOException e) {
+        catch (UnsatisfiedLinkError | IllegalStateException | SecurityException e) {
             throw new ExceptionInInitializerError(e);
         }
     }
@@ -42,7 +40,7 @@ public class BrotliCompressor implements ICompressor {
         return new BrotliCompressor(options);
     }
 
-    private final com.meteogroup.jbrotli.BrotliCompressor compressor = new com.meteogroup.jbrotli.BrotliCompressor();
+    private final org.meteogroup.jbrotli.BrotliCompressor compressor = new org.meteogroup.jbrotli.BrotliCompressor();
     private final BrotliDeCompressor decompressor = new BrotliDeCompressor();
     private final Brotli.Parameter brotliParam;
 
@@ -117,7 +115,7 @@ public class BrotliCompressor implements ICompressor {
     }
 
     private static Brotli.Parameter getDefaultBrotliParameter() {
-        return new Brotli.Parameter(Mode.GENERIC, 0, Brotli.DEFAULT_LGWIN, Brotli.DEFAULT_LGBLOCK);
+        return new Brotli.Parameter(Brotli.Mode.GENERIC, 0, Brotli.DEFAULT_LGWIN, Brotli.DEFAULT_LGBLOCK);
     }
 
 }
